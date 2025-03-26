@@ -7,9 +7,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"time"
-
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 var xmlEscaper = strings.NewReplacer(
@@ -23,7 +20,6 @@ var xmlEscaper = strings.NewReplacer(
 type SVGRenderer struct{}
 
 func (r SVGRenderer) Render(root UIBox, w, h float64) []byte {
-	defer tracker.TrackTime(time.Now(), "Treemap SVG render")
 	if !root.IsRoot {
 		return nil
 	}
@@ -128,7 +124,6 @@ type StreamingSVGRenderer struct{}
 
 // RenderStream renders the treemap directly to a file with optimized memory usage
 func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename string) error {
-	defer tracker.TrackTime(time.Now(), "Treemap SVG streaming render")
 	if !root.IsRoot {
 		return fmt.Errorf("not a root node")
 	}

@@ -2,15 +2,12 @@ package render
 
 import (
 	_ "embed"
-	"fmt"
 	"image/color"
 	"log"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/lucasb-eyer/go-colorful"
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 // This table contains the "keypoints" of the colorgradient you want to generate.
@@ -73,7 +70,6 @@ func makePaletteFromCSV(csv string) ColorfulPalette {
 }
 
 func GetPalette(name string) (ColorfulPalette, bool) {
-	defer tracker.TrackTime(time.Now(), fmt.Sprintf("Get color palette for %s", name))
 	switch name {
 	case "RdBu":
 		return makePaletteFromCSV(paletteReBuCSV), true

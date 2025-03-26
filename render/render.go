@@ -3,12 +3,10 @@ package render
 import (
 	"image/color"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/MazenAlkhatib/treemap"
 	"github.com/MazenAlkhatib/treemap/layout"
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 const (
@@ -65,7 +63,6 @@ type UITreeMapBuilder struct {
 }
 
 func (s UITreeMapBuilder) NewUITreeMap(tree treemap.Tree, w, h, margin, padding, paddingRoot float64) UIBox {
-	defer tracker.TrackTime(time.Now(), "NewUITreeMap")
 	t := UIBox{
 		X:           0 + paddingRoot,
 		Y:           0 + paddingRoot,
@@ -116,7 +113,6 @@ func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, m
 				Color: s.Colorer.ColorText(tree, node),
 			}
 		}
-
 	}
 
 	if len(tree.To[node]) == 0 {

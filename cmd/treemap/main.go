@@ -13,11 +13,10 @@ import (
 	"github.com/MazenAlkhatib/treemap"
 	"github.com/MazenAlkhatib/treemap/parser"
 	"github.com/MazenAlkhatib/treemap/render"
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 const doc string = `
-Generate treemaps from STDIN in header-less CSV.
+Generate treemaps from file in header-less CSV.
 
 </ delimitered path>,<size>
 
@@ -27,7 +26,6 @@ Command options:
 var grey = color.RGBA{128, 128, 128, 255}
 
 func main() {
-	// Set GOGC to trigger GC more frequently
 	debug.SetGCPercent(20)
 
 	var (
@@ -59,17 +57,12 @@ func main() {
 	flag.StringVar(&inputFile, "input", "", "Input CSV file path (if not provided, reads from stdin)")
 	flag.Parse()
 
-	defer tracker.TrackTime(time.Now(), "Full Execution")
 	fmt.Printf("Processing has been started at %s\n", time.Now().Format("15:04:05"))
-
-	// Print initial memory stats
-	printMemStats("Initial")
 
 	parser := parser.CSVTreeParser{}
 	var tree *treemap.Tree
 	var err error
 
-	fmt.Printf("Starting batch parsing of %s...\n", inputFile)
 	tree, err = parser.ParseFile(inputFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "can not parse: %v\n", err)
@@ -80,23 +73,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Parsing completed. Nodes: %d\n", len(tree.Nodes))
-	printMemStats("After parsing")
-
 	// Force GC before heavy processing
 	runtime.GC()
 
 	treemap.SetNamesFromPaths(tree)
-	printMemStats("After setting names")
 
 	if !keepLongPaths {
 		treemap.CollapseLongPaths(tree)
-		printMemStats("After collapsing paths")
 	}
 
 	sizeImputer := treemap.SumSizeImputer{EmptyLeafSize: 1}
 	sizeImputer.ImputeSize(*tree)
-	printMemStats("After size imputation")
 
 	// Force GC before coloring setup
 	runtime.GC()
@@ -141,24 +128,9 @@ func main() {
 
 	renderTreemapStreaming(tree, w, h, uiBuilder, outputPath, marginBox, paddingBox, padding)
 	runtime.GC()
-	printMemStats(fmt.Sprintf("After %dx%d render", int(w), int(h)))
-}
-
-func printMemStats(stage string) {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	fmt.Printf("[%s] Memory usage: Alloc = %v MiB, TotalAlloc = %v MiB, Sys = %v MiB, NumGC = %v\n",
-		stage,
-		m.Alloc/1024/1024,
-		m.TotalAlloc/1024/1024,
-		m.Sys/1024/1024,
-		m.NumGC)
 }
 
 func renderTreemapStreaming(tree *treemap.Tree, w, h float64, uiBuilder render.UITreeMapBuilder, outputPath string, marginBox, paddingBox, padding float64) {
-	defer tracker.TrackTime(time.Now(), "RenderTreemapStreaming")
-	startTime := time.Now()
-	fmt.Printf("Streaming treemap %dx%d started at %s\n", int(w), int(h), startTime.Format("15:04:05"))
 
 	spec := uiBuilder.NewUITreeMap(*tree, w, h, marginBox, paddingBox, padding)
 	renderer := render.StreamingSVGRenderer{}
@@ -171,7 +143,4 @@ func renderTreemapStreaming(tree *treemap.Tree, w, h float64, uiBuilder render.U
 
 	// Clean up the spec after rendering
 	spec.Children = nil
-
-	elapsed := time.Since(startTime)
-	fmt.Printf("Streaming %dx%d completed in %s\n", int(w), int(h), elapsed)
 }

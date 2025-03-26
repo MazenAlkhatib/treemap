@@ -2,9 +2,6 @@ package treemap
 
 import (
 	"strings"
-	"time"
-
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 // SumSizeImputer will set sum of children into empty parents and fill children with contant.
@@ -13,7 +10,6 @@ type SumSizeImputer struct {
 }
 
 func (s SumSizeImputer) ImputeSize(t Tree) {
-	defer tracker.TrackTime(time.Now(), "Impute the size")
 	s.ImputeSizeNode(t, t.Root)
 }
 

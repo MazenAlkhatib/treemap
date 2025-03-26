@@ -8,10 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/MazenAlkhatib/treemap"
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 // CSVTreeParser handles parsing of CSV data into a tree structure
@@ -21,8 +19,6 @@ type CSVTreeParser struct {
 
 // ParseReader parses CSV data from a reader into a tree structure
 func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
-	defer tracker.TrackTime(time.Now(), "CSV Parsing")
-
 	tree := &treemap.Tree{
 		Nodes: make(map[string]treemap.Node),
 		To:    make(map[string][]string),
@@ -38,9 +34,6 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 		r.Comma = s.Comma
 	}
 	r.LazyQuotes = true
-
-	recordCount := 0
-	startTime := time.Now()
 
 	for {
 		record, err := r.Read()
@@ -111,13 +104,6 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 
 			parent = child
 		}
-
-		recordCount++
-		if recordCount%1000 == 0 {
-			elapsed := time.Since(startTime)
-			recordsPerSecond := float64(recordCount) / elapsed.Seconds()
-			fmt.Printf("\rProcessed %d records (%.2f records/sec)", recordCount, recordsPerSecond)
-		}
 	}
 
 	// Find roots
@@ -138,7 +124,6 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 		tree.Root = roots[0]
 	}
 
-	fmt.Printf("\nFinished processing %d records in %v\n", recordCount, time.Since(startTime))
 	return tree, nil
 }
 

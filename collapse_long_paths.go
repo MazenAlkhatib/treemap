@@ -2,17 +2,14 @@ package treemap
 
 import (
 	"strings"
-	"time"
-
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 // CollapseLongPaths will collapse all long chains in tree.
 func CollapseLongPaths(t *Tree) {
-	defer tracker.TrackTime(time.Now(), "Collapse long paths")
 	if t == nil {
 		return
 	}
+
 	CollapseLongPathsFromNode(t, t.Root)
 }
 

@@ -2,9 +2,6 @@ package treemap
 
 import (
 	"strings"
-	"time"
-
-	"github.com/MazenAlkhatib/treemap/tracker"
 )
 
 type Node struct {
@@ -21,10 +18,10 @@ type Tree struct {
 
 // SetNamesFromPaths will update each node to its path leaf as name.
 func SetNamesFromPaths(t *Tree) {
-	defer tracker.TrackTime(time.Now(), "Set names from paths")
 	if t == nil {
 		return
 	}
+
 	for path, node := range t.Nodes {
 		parts := strings.Split(node.Path, "/")
 		if len(parts) == 0 {
