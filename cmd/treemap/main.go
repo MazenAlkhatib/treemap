@@ -71,7 +71,7 @@ func main() {
 
 	if inputFile != "" {
 		fmt.Printf("Starting batch parsing of %s...\n", inputFile)
-		tree, err = parser.ParseFileBatchedArray(inputFile, 5_000_000)
+		tree, err = parser.ParseFileBatchedArray(inputFile, 100000)
 	} else {
 		tree, err = parser.ParseReader(os.Stdin)
 	}

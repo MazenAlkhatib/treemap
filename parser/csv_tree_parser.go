@@ -306,14 +306,13 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 		csvReader.Comma = s.Comma
 	}
 
-	// Read records in batches
-	pathCol := 0
-	sizeCol := 1
+	// Pre-allocate batch slice with capacity
 	batch := make([]struct {
 		path string
 		size float64
 	}, 0, batchSize)
-	recordCount := 0 // Start at 1 since we processed the first row
+
+	recordCount := 0
 	startTime := time.Now()
 
 	for {
@@ -326,7 +325,7 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 		}
 
 		// Parse size
-		size, err := strconv.ParseFloat(record[sizeCol], 64)
+		size, err := strconv.ParseFloat(record[1], 64)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing size: %v", err)
 		}
@@ -336,7 +335,7 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 			path string
 			size float64
 		}{
-			path: record[pathCol],
+			path: record[0],
 			size: size,
 		})
 
