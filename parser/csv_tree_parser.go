@@ -292,7 +292,7 @@ func (s *CSVTreeParser) ParseReaderBatched(reader io.Reader, batchSize int) (*tr
 
 // ParseReaderBatchedArray parses a CSV reader in batches to build the tree structure using the array-based structure
 func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int) (*treemap.Tree, error) {
-	defer tracker.TrackTime(time.Now(), "CSV Batched Parsing Array")
+	defer tracker.TrackTime(time.Now(), "CSV Parsing")
 
 	// Initialize the final tree structure
 	tree := &treemap.Tree{
@@ -305,12 +305,6 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 	if s.Comma != 0 {
 		csvReader.Comma = s.Comma
 	}
-
-	// Pre-allocate batch slice with capacity
-	batch := make([]struct {
-		path string
-		size float64
-	}, 0, batchSize)
 
 	recordCount := 0
 	startTime := time.Now()
@@ -330,30 +324,48 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 			return nil, fmt.Errorf("error parsing size: %v", err)
 		}
 
-		// Add to batch
-		batch = append(batch, struct {
-			path string
-			size float64
-		}{
-			path: record[0],
-			size: size,
-		})
+		// Process record immediately
+		path := record[0]
+		if existingNode, ok := tree.Nodes[path]; ok {
+			tree.Nodes[path] = treemap.Node{
+				Path: existingNode.Path,
+				Name: existingNode.Name,
+				Size: existingNode.Size + size,
+			}
+		} else {
+			tree.Nodes[path] = treemap.Node{
+				Path: path,
+				Size: size,
+			}
+		}
+
+		// Process parent-child relationships
+		parts := strings.Split(path, "/")
+		for parent, i := parts[0], 1; i < len(parts); i++ {
+			child := parent + "/" + parts[i]
+
+			if _, ok := tree.Nodes[parent]; !ok {
+				tree.Nodes[parent] = treemap.Node{
+					Path: parent,
+				}
+			}
+			tree.To[parent] = append(tree.To[parent], child)
+
+			parent = child
+		}
 
 		recordCount++
-		if len(batch) == batchSize {
-			s.processBatchToTree(tree, batch)
-			batch = batch[:0] // Reset slice while keeping capacity
-
-			// Print progress
+		if recordCount%1000 == 0 {
+			// Print progress every 1000 records
 			elapsed := time.Since(startTime)
 			recordsPerSecond := float64(recordCount) / elapsed.Seconds()
 			fmt.Printf("\rProcessed %d records (%.2f records/sec)", recordCount, recordsPerSecond)
 		}
 	}
 
-	// Process remaining records
-	if len(batch) > 0 {
-		s.processBatchToTree(tree, batch)
+	// Deduplicate edges
+	for node, v := range tree.To {
+		tree.To[node] = unique(v)
 	}
 
 	// Find root nodes (nodes without parents)
@@ -384,48 +396,6 @@ func (s *CSVTreeParser) ParseReaderBatchedArray(reader io.Reader, batchSize int)
 
 	fmt.Printf("\nFinished processing %d records in %v\n", recordCount, time.Since(startTime))
 	return tree, nil
-}
-
-// processBatchToTree processes a batch of records and updates the tree structure directly
-func (s *CSVTreeParser) processBatchToTree(tree *treemap.Tree, batch []struct {
-	path string
-	size float64
-}) {
-	for _, record := range batch {
-		// Process node immediately
-		if existingNode, ok := tree.Nodes[record.path]; ok {
-			tree.Nodes[record.path] = treemap.Node{
-				Path: existingNode.Path,
-				Name: existingNode.Name,
-				Size: existingNode.Size + record.size,
-			}
-		} else {
-			tree.Nodes[record.path] = treemap.Node{
-				Path: record.path,
-				Size: record.size,
-			}
-		}
-
-		// Process parent-child relationships
-		parts := strings.Split(record.path, "/")
-		for parent, i := parts[0], 1; i < len(parts); i++ {
-			child := parent + "/" + parts[i]
-
-			if _, ok := tree.Nodes[parent]; !ok {
-				tree.Nodes[parent] = treemap.Node{
-					Path: parent,
-				}
-			}
-			tree.To[parent] = append(tree.To[parent], child)
-
-			parent = child
-		}
-	}
-
-	// Deduplicate edges
-	for node, v := range tree.To {
-		tree.To[node] = unique(v)
-	}
 }
 
 // ArrayNode represents a node in the array-based tree structure
