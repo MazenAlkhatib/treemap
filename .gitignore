@@ -16,5 +16,6 @@
 
 ./treemap
 *.svg
+!docs/*.svg
 
 .DS_Store
