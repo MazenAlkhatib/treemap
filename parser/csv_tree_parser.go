@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/MazenAlkhatib/treemap"
+	"github.com/schollz/progressbar/v3"
 )
 
 // CSVTreeParser handles parsing of CSV data into a tree structure
@@ -34,6 +35,10 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 		r.Comma = s.Comma
 	}
 	r.LazyQuotes = true
+
+	// Create progress bar with unknown total
+	bar := progressbar.Default(-1)
+	bar.Describe("Parsing CSV records")
 
 	for {
 		record, err := r.Read()
@@ -104,7 +109,12 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 
 			parent = child
 		}
+
+		bar.Add(1)
 	}
+
+	// Finish the progress bar
+	bar.Finish()
 
 	// Find roots
 	var roots []string

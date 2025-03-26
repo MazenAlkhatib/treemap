@@ -2,6 +2,8 @@ package treemap
 
 import (
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 // SumSizeImputer will set sum of children into empty parents and fill children with contant.
@@ -10,13 +12,17 @@ type SumSizeImputer struct {
 }
 
 func (s SumSizeImputer) ImputeSize(t Tree) {
-	s.ImputeSizeNode(t, t.Root)
+	// Create progress bar with total number of nodes
+	bar := progressbar.Default(int64(len(t.Nodes)))
+	bar.Describe("Imputing sizes")
+
+	s.ImputeSizeNode(t, t.Root, bar)
 }
 
-func (s SumSizeImputer) ImputeSizeNode(t Tree, node string) {
+func (s SumSizeImputer) ImputeSizeNode(t Tree, node string, bar *progressbar.ProgressBar) {
 	var sum float64
 	for _, child := range t.To[node] {
-		s.ImputeSizeNode(t, child)
+		s.ImputeSizeNode(t, child, bar)
 		sum += t.Nodes[child].Size
 	}
 
@@ -37,4 +43,5 @@ func (s SumSizeImputer) ImputeSizeNode(t Tree, node string) {
 			Size: v,
 		}
 	}
+	bar.Add(1)
 }

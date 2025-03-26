@@ -2,6 +2,8 @@ package treemap
 
 import (
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 type Node struct {
@@ -22,6 +24,10 @@ func SetNamesFromPaths(t *Tree) {
 		return
 	}
 
+	// Create progress bar with total number of nodes
+	bar := progressbar.Default(int64(len(t.Nodes)))
+	bar.Describe("Updating node names")
+
 	for path, node := range t.Nodes {
 		parts := strings.Split(node.Path, "/")
 		if len(parts) == 0 {
@@ -33,5 +39,9 @@ func SetNamesFromPaths(t *Tree) {
 			Name: parts[len(parts)-1],
 			Size: node.Size,
 		}
+		bar.Add(1)
 	}
+
+	// Finish the progress bar
+	bar.Finish()
 }

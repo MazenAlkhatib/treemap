@@ -2,6 +2,8 @@ package treemap
 
 import (
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 // CollapseLongPaths will collapse all long chains in tree.
@@ -10,17 +12,24 @@ func CollapseLongPaths(t *Tree) {
 		return
 	}
 
-	CollapseLongPathsFromNode(t, t.Root)
+	// Create progress bar with total number of nodes
+	bar := progressbar.Default(int64(len(t.Nodes)))
+	bar.Describe("Collapsing long paths")
+
+	// Process nodes
+	CollapseLongPathsFromNode(t, t.Root, bar)
 }
 
 // CollapseLongPathsFromNode will collapse current node into children as long as it has single child.
 // Will set name of this node to joined path from roots.
 // Will set size to this child's size.
 // Expecting Name containing either single value for current node.
-func CollapseLongPathsFromNode(t *Tree, nodeName string) {
+func CollapseLongPathsFromNode(t *Tree, nodeName string, bar *progressbar.ProgressBar) {
 	if t == nil {
 		return
 	}
+
+	bar.Add(1)
 
 	parts := []string{}
 	q := nodeName
@@ -59,6 +68,6 @@ func CollapseLongPathsFromNode(t *Tree, nodeName string) {
 
 	// recursively collapse
 	for _, node := range t.To[nodeName] {
-		CollapseLongPathsFromNode(t, node)
+		CollapseLongPathsFromNode(t, node, bar)
 	}
 }
