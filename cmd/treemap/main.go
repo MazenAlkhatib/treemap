@@ -69,12 +69,8 @@ func main() {
 	var tree *treemap.Tree
 	var err error
 
-	if inputFile != "" {
-		fmt.Printf("Starting batch parsing of %s...\n", inputFile)
-		tree, err = parser.ParseFileBatchedArray(inputFile, 100000)
-	} else {
-		tree, err = parser.ParseReader(os.Stdin)
-	}
+	fmt.Printf("Starting batch parsing of %s...\n", inputFile)
+	tree, err = parser.ParseFile(inputFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "can not parse: %v\n", err)
 		os.Exit(1)
