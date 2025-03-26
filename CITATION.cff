@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: If you reference this library in publication, please cite it as below.
+title: Memory efficient Treemap Visualization in Go
+abstract: Implementation of treemap visualization in Go
+authors:
+- family-names: Al Khatib
+  given-names: Mazen
+version: 1.0
+date-released: 2025-03-26
+license: MIT
+repository-code: https://github.com/MazenAlkhatib/treemap
+url: https://github.com/MazenAlkhatib/treemap
