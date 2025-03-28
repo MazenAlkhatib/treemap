@@ -6,10 +6,10 @@ clean:
 	-mv *.svg svgs/
 
 build: clean
-	go build ./cmd/treemap
+	GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -gcflags="-l=4" -o treemap ./cmd/treemap
 
 build-arm64: clean
-	GOOS=darwin GOARCH=arm64 go build -o treemap_darwin_arm64 ./cmd/treemap
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -gcflags="-l=4" -o treemap_darwin_arm64 ./cmd/treemap
 
 cover:
 	go test -cover ./...
