@@ -7,8 +7,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
-
-	"github.com/schollz/progressbar/v3"
+	"time"
 )
 
 var xmlEscaper = strings.NewReplacer(
@@ -27,6 +26,9 @@ func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename st
 	if !root.IsRoot {
 		return fmt.Errorf("not a root node")
 	}
+
+	start := time.Now()
+	fmt.Printf("Rendering SVG tree map...\n")
 
 	file, err := os.Create(filename)
 	if err != nil {
@@ -53,10 +55,6 @@ func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename st
 	var processed int
 	var currentBatch []UIBox
 
-	// Create progress bar with total number of nodes
-	bar := progressbar.Default(int64(len(root.Children)))
-	bar.Describe("Rendering SVG tree map")
-
 	for len(que) > 0 {
 		// Take up to batchSize boxes from queue
 		batchEnd := batchSize
@@ -75,7 +73,7 @@ func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename st
 
 			// Write box SVG directly to file
 			if !q.IsInvisible {
-				if err := streamBoxSVG(file, q, bar); err != nil {
+				if err := streamBoxSVG(file, q); err != nil {
 					return fmt.Errorf("failed to write box: %w", err)
 				}
 			}
@@ -99,11 +97,12 @@ func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename st
 		return fmt.Errorf("failed to write footer: %w", err)
 	}
 
+	fmt.Printf("SVG tree map rendering completed in %v\n", time.Since(start))
 	return nil
 }
 
 // streamBoxSVG writes a single box's SVG directly to the file
-func streamBoxSVG(file *os.File, q UIBox, bar *progressbar.ProgressBar) error {
+func streamBoxSVG(file *os.File, q UIBox) error {
 	// Get box colors
 	r, g, b, a := color.White.RGBA()
 	if q.Color != color.Opaque {
@@ -149,7 +148,6 @@ func streamBoxSVG(file *os.File, q UIBox, bar *progressbar.ProgressBar) error {
 		return err
 	}
 
-	bar.Add(1)
 	return nil
 }
 

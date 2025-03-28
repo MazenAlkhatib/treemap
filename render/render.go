@@ -1,13 +1,14 @@
 package render
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/MazenAlkhatib/treemap"
 	"github.com/MazenAlkhatib/treemap/layout"
-	"github.com/schollz/progressbar/v3"
 )
 
 const (
@@ -64,9 +65,8 @@ type UITreeMapBuilder struct {
 }
 
 func (s UITreeMapBuilder) NewUITreeMap(tree treemap.Tree, w, h, margin, padding, paddingRoot float64) UIBox {
-	// Create progress bar with total number of nodes
-	bar := progressbar.Default(int64(len(tree.Nodes)))
-	bar.Describe("Building UI tree map")
+	start := time.Now()
+	fmt.Printf("Building UI tree map...\n")
 
 	t := UIBox{
 		X:           0 + paddingRoot,
@@ -78,13 +78,14 @@ func (s UITreeMapBuilder) NewUITreeMap(tree treemap.Tree, w, h, margin, padding,
 	}
 
 	t.Children = []UIBox{
-		s.NewUIBox(tree.Root, tree, t.X, t.Y, t.W, t.H, margin, padding, bar),
+		s.NewUIBox(tree.Root, tree, t.X, t.Y, t.W, t.H, margin, padding),
 	}
 
+	fmt.Printf("UI tree map building completed in %v\n", time.Since(start))
 	return t
 }
 
-func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, margin float64, padding float64, bar *progressbar.ProgressBar) UIBox {
+func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, margin float64, padding float64) UIBox {
 	if (w <= (2 * padding)) || (h <= (2 * padding)) || w < tooSmallBoxWidth || h < tooSmallBoxHeight {
 		// too small, do not render
 		return UIBox{}
@@ -121,7 +122,6 @@ func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, m
 	}
 
 	if len(tree.To[node]) == 0 {
-		bar.Add(1)
 		return t
 	}
 
@@ -152,7 +152,6 @@ func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, m
 			boxes[i].H,
 			margin,
 			padding,
-			bar,
 		)
 		if box.IsEmpty() {
 			continue
@@ -160,7 +159,6 @@ func (s UITreeMapBuilder) NewUIBox(node string, tree treemap.Tree, x, y, w, h, m
 		t.Children = append(t.Children, box)
 	}
 
-	bar.Add(1)
 	return t
 }
 
