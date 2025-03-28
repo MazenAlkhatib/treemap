@@ -8,6 +8,9 @@ clean:
 build: clean
 	go build ./cmd/treemap
 
+build-arm64: clean
+	GOOS=darwin GOARCH=arm64 go build -o treemap_darwin_arm64 ./cmd/treemap
+
 cover:
 	go test -cover ./...
 
