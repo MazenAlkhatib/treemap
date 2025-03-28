@@ -150,5 +150,29 @@ func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 	}
 	defer file.Close()
 
-	return s.ParseReader(file)
+	// Create CSV reader
+	reader := csv.NewReader(file)
+	if s.Comma != 0 {
+		reader.Comma = s.Comma
+	}
+	reader.LazyQuotes = true
+
+	// Read first line to check if it's a header
+	firstLine, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("error reading first line: %w", err)
+	}
+
+	// Check if first line is a header by trying to parse its size
+	if len(firstLine) >= 2 {
+		_, err = strconv.ParseFloat(firstLine[1], 64)
+		if err != nil {
+			// If parsing fails, it's likely a header, so we'll skip it
+			// and continue with the rest of the file
+			return s.ParseReader(io.MultiReader(strings.NewReader(""), file))
+		}
+	}
+
+	// If we get here, either the first line was valid data or we're skipping it
+	return s.ParseReader(io.MultiReader(strings.NewReader(strings.Join(firstLine, ",")+"\n"), file))
 }
