@@ -8,6 +8,8 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/MazenAlkhatib/treemap"
@@ -18,7 +20,14 @@ import (
 const doc string = `
 Generate treemaps from file in header-less CSV.
 
-</ delimitered path>,<size>
+Usage:
+  treemap [options] -input data.csv
+
+Input format:
+  /delimitered/path,size
+
+Example:
+  treemap -input data.csv -sizes "1024x768,2048x1536" -output-path output
 
 Command options:
 `
@@ -29,8 +38,7 @@ func main() {
 	debug.SetGCPercent(20)
 
 	var (
-		w             float64
-		h             float64
+		sizes         []struct{ w, h float64 }
 		marginBox     float64
 		paddingBox    float64
 		padding       float64
@@ -45,8 +53,9 @@ func main() {
 		fmt.Fprint(flag.CommandLine.Output(), doc)
 		flag.PrintDefaults()
 	}
-	flag.Float64Var(&w, "w", 1024, "width of output")
-	flag.Float64Var(&h, "h", 1024, "height of output")
+
+	// Parse size pairs
+	sizesStr := flag.String("sizes", "1024x1024", "comma-separated list of output sizes in format widthxheight (e.g., 1024x768,2048x1536)")
 	flag.Float64Var(&marginBox, "margin-box", 4, "margin between boxes")
 	flag.Float64Var(&paddingBox, "padding-box", 4, "padding between box border and content")
 	flag.Float64Var(&padding, "padding", 32, "padding around root content")
@@ -56,6 +65,29 @@ func main() {
 	flag.BoolVar(&keepLongPaths, "long-paths", false, "keep long paths when paren has single child")
 	flag.StringVar(&inputFile, "input", "", "Input CSV file path (if not provided, reads from stdin)")
 	flag.Parse()
+
+	// Parse size pairs
+	sizeStrs := strings.Split(*sizesStr, ",")
+	sizes = make([]struct{ w, h float64 }, len(sizeStrs))
+
+	for i, sizeStr := range sizeStrs {
+		parts := strings.Split(strings.TrimSpace(sizeStr), "x")
+		if len(parts) != 2 {
+			log.Fatalf("invalid size format: %s (expected widthxheight)", sizeStr)
+		}
+
+		w, err := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+		if err != nil {
+			log.Fatalf("invalid width value: %v", err)
+		}
+		sizes[i].w = w
+
+		h, err := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+		if err != nil {
+			log.Fatalf("invalid height value: %v", err)
+		}
+		sizes[i].h = h
+	}
 
 	fmt.Printf("Processing has been started at %s\n", time.Now().Format("15:04:05"))
 
@@ -126,8 +158,11 @@ func main() {
 		BorderColor: borderColor,
 	}
 
-	renderTreemapStreaming(tree, w, h, uiBuilder, outputPath, marginBox, paddingBox, padding)
-	runtime.GC()
+	// Render for each size pair
+	for _, size := range sizes {
+		renderTreemapStreaming(tree, size.w, size.h, uiBuilder, outputPath, marginBox, paddingBox, padding)
+		runtime.GC()
+	}
 }
 
 func renderTreemapStreaming(tree *treemap.Tree, w, h float64, uiBuilder render.UITreeMapBuilder, outputPath string, marginBox, paddingBox, padding float64) {
