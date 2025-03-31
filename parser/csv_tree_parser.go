@@ -160,6 +160,16 @@ func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 	}
 	defer file.Close()
 
+	// Check if file is empty
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get file info: %w", err)
+	}
+	if fileInfo.Size() == 0 {
+		fmt.Println("File is empty")
+		return nil, nil
+	}
+
 	// Create CSV reader
 	reader := csv.NewReader(file)
 	if s.Comma != 0 {
@@ -179,10 +189,26 @@ func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 		if err != nil {
 			// If parsing fails, it's likely a header, so we'll skip it
 			// and continue with the rest of the file
-			return s.ParseReader(io.MultiReader(strings.NewReader(""), file))
+			tree, err := s.ParseReader(io.MultiReader(strings.NewReader(""), file))
+			if err != nil {
+				return nil, err
+			}
+			if tree == nil || len(tree.Nodes) == 0 {
+				fmt.Println("No valid data found in file (all paths were skipped or file is empty)")
+				return nil, nil
+			}
+			return tree, nil
 		}
 	}
 
 	// If we get here, either the first line was valid data or we're skipping it
-	return s.ParseReader(io.MultiReader(strings.NewReader(strings.Join(firstLine, ",")+"\n"), file))
+	tree, err := s.ParseReader(io.MultiReader(strings.NewReader(strings.Join(firstLine, ",")+"\n"), file))
+	if err != nil {
+		return nil, err
+	}
+	if tree == nil || len(tree.Nodes) == 0 {
+		fmt.Println("No valid data found in file (all paths were skipped or file is empty)")
+		return nil, nil
+	}
+	return tree, nil
 }

@@ -112,7 +112,6 @@ func main() {
 	}
 
 	if tree == nil {
-		fmt.Printf("No data found in file\n")
 		os.Exit(0)
 	}
 
