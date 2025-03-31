@@ -66,7 +66,7 @@ type UITreeMapBuilder struct {
 
 func (s UITreeMapBuilder) NewUITreeMap(tree treemap.Tree, w, h, margin, padding, paddingRoot float64) UIBox {
 	start := time.Now()
-	fmt.Printf("Building UI tree map...\n")
+	fmt.Printf("Building UI tree map at %v...\n", start)
 
 	t := UIBox{
 		X:           0 + paddingRoot,
