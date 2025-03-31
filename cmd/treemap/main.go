@@ -111,6 +111,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if tree == nil {
+		fmt.Printf("No data found in file\n")
+		os.Exit(0)
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}

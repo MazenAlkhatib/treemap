@@ -54,6 +54,11 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 		}
 
 		path := record[0]
+		// Skip paths that end with "/"
+		if strings.HasSuffix(path, "/") {
+			continue
+		}
+
 		var size float64
 		if len(record) >= 2 {
 			size, err = strconv.ParseFloat(record[1], 64)
@@ -115,6 +120,11 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 
 	// Finish the progress bar
 	bar.Finish()
+
+	// Case of no data was found in the file
+	if len(tree.Nodes) == 0 {
+		return nil, nil
+	}
 
 	// Find roots
 	var roots []string
