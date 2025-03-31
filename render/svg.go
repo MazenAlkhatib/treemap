@@ -28,7 +28,7 @@ func (r StreamingSVGRenderer) RenderStream(root UIBox, w, h float64, filename st
 	}
 
 	start := time.Now()
-	fmt.Printf("Rendering SVG tree map at %v...\n", start)
+	fmt.Printf("Rendering SVG tree map at %v...\n", start.Format("15:04:05"))
 
 	file, err := os.Create(filename)
 	if err != nil {
