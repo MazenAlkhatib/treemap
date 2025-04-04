@@ -62,6 +62,10 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 			}
 		}
 
+		if strings.HasSuffix(path, "/") {
+			continue
+		}
+
 		// Get node name from path
 		parts := strings.Split(path, "/")
 		name := parts[len(parts)-1]
@@ -137,11 +141,6 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 	return tree, nil
 }
 
-// ParseString parses CSV data from a string into a tree structure
-func (s *CSVTreeParser) ParseString(in string) (*treemap.Tree, error) {
-	return s.ParseReader(strings.NewReader(in))
-}
-
 // ParseFile parses a CSV file into a tree structure
 func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 	file, err := os.Open(filepath)
@@ -169,7 +168,7 @@ func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 		if err != nil {
 			// If parsing fails, it's likely a header, so we'll skip it
 			// and continue with the rest of the file
-			return s.ParseReader(io.MultiReader(strings.NewReader(""), file))
+			return s.ParseReader(io.MultiReader(strings.NewReader("\n"), file))
 		}
 	}
 
