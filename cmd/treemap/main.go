@@ -15,7 +15,6 @@ import (
 	"github.com/MazenAlkhatib/treemap"
 	"github.com/MazenAlkhatib/treemap/parser"
 	"github.com/MazenAlkhatib/treemap/render"
-	"github.com/schollz/progressbar/v3"
 )
 
 const doc string = `
@@ -115,47 +114,8 @@ func main() {
 		treemap.CollapseLongPaths(tree)
 	}
 
-	fmt.Println("tree size", int64(len(tree.Nodes)))
-
 	sizeImputer := treemap.SumSizeImputer{EmptyLeafSize: 1}
 	sizeImputer.ImputeSize(*tree)
-
-	fmt.Println("tree size after imputation", int64(len(tree.Nodes)))
-
-	// Check for duplicate paths and overlapping relations
-	seenPaths := make(map[string]bool)
-	seenRelations := make(map[string]map[string]bool)
-
-	// Create progress bar for validation
-	bar := progressbar.Default(int64(len(tree.Nodes)))
-	bar.Describe("Validating tree structure")
-
-	for path := range tree.Nodes {
-		// Check for duplicate paths
-		if seenPaths[path] {
-			log.Fatalf("duplicate path found: %s", path)
-		}
-		seenPaths[path] = true
-
-		// Check for overlapping relations
-		if children, ok := tree.To[path]; ok {
-			if _, ok := seenRelations[path]; !ok {
-				seenRelations[path] = make(map[string]bool)
-			}
-
-			for _, child := range children {
-				if seenRelations[path][child] {
-					log.Fatalf("duplicate relation found: %s -> %s", path, child)
-				}
-				seenRelations[path][child] = true
-			}
-		}
-
-		bar.Add(1)
-	}
-
-	// Finish the progress bar
-	bar.Finish()
 
 	// Force GC before coloring setup
 	runtime.GC()
