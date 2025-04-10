@@ -1,6 +1,7 @@
 package treemap
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/schollz/progressbar/v3"
@@ -31,6 +32,7 @@ func SetNamesFromPaths(t *Tree) {
 	for path, node := range t.Nodes {
 		parts := strings.Split(node.Path, "/")
 		if len(parts) == 0 {
+			fmt.Println("no parts", node.Path)
 			continue
 		}
 
