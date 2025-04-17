@@ -90,24 +90,34 @@ type squarifyBoxLayout struct {
 // squarify expects normalized areas that add up to free space.
 // areas should not be zero.
 func (l *squarifyBoxLayout) squarify(unassignedAreas []float64, stackAreas []float64, w float64) {
-	if len(unassignedAreas) == 0 {
-		l.stackBoxes(stackAreas)
-		return
+	// Initialize the stack with the first area if we're starting fresh
+	if len(stackAreas) == 0 && len(unassignedAreas) > 0 {
+		stackAreas = []float64{unassignedAreas[0]}
+		unassignedAreas = unassignedAreas[1:]
 	}
 
-	if len(stackAreas) == 0 {
-		l.squarify(unassignedAreas[1:], []float64{unassignedAreas[0]}, w)
-		return
+	// Process all areas iteratively
+	for len(unassignedAreas) > 0 {
+		nextArea := unassignedAreas[0]
+		unassignedAreas = unassignedAreas[1:]
+
+		// Try adding the next area to the current stack
+		stackWithNext := append(stackAreas, nextArea)
+
+		if highestAspectRatio(stackAreas, w) > highestAspectRatio(stackWithNext, w) {
+			// Aspect ratio improves, keep adding to current stack
+			stackAreas = stackWithNext
+		} else {
+			// Aspect ratio does not improve, process current stack and start new one
+			l.stackBoxes(stackAreas)
+			stackAreas = []float64{nextArea}
+			w = math.Min(l.freeSpace.W, l.freeSpace.H)
+		}
 	}
 
-	c := unassignedAreas[0]
-	if stackc := append(stackAreas, c); highestAspectRatio(stackAreas, w) > highestAspectRatio(stackc, w) {
-		// aspect ratio improves, add it to current stack
-		l.squarify(unassignedAreas[1:], stackc, w)
-	} else {
-		// aspect ratio does not improve
+	// Process any remaining areas in the stack
+	if len(stackAreas) > 0 {
 		l.stackBoxes(stackAreas)
-		l.squarify(unassignedAreas, nil, math.Min(l.freeSpace.W, l.freeSpace.H))
 	}
 }
 

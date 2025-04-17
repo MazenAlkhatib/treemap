@@ -39,7 +39,7 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 	// Create progress bar with unknown total
 	bar := progressbar.Default(-1)
 	bar.Describe("Parsing CSV records")
-
+	count := 0
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
@@ -53,6 +53,13 @@ func (s *CSVTreeParser) ParseReader(reader io.Reader) (*treemap.Tree, error) {
 			return nil, errors.New("no values in row")
 		}
 
+		if (record[0] == "path" || record[0] == "full_path") && count == 0 {
+			// skip header
+			count++
+			continue
+		}
+
+		count++
 		path := record[0]
 		var size float64
 		if len(record) >= 2 {
@@ -149,29 +156,5 @@ func (s *CSVTreeParser) ParseFile(filepath string) (*treemap.Tree, error) {
 	}
 	defer file.Close()
 
-	// Create CSV reader
-	reader := csv.NewReader(file)
-	if s.Comma != 0 {
-		reader.Comma = s.Comma
-	}
-	reader.LazyQuotes = true
-
-	// Read first line to check if it's a header
-	firstLine, err := reader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("error reading first line: %w", err)
-	}
-
-	// Check if first line is a header by trying to parse its size
-	if len(firstLine) >= 2 {
-		_, err = strconv.ParseFloat(firstLine[1], 64)
-		if err != nil {
-			// If parsing fails, it's likely a header, so we'll skip it
-			// and continue with the rest of the file
-			return s.ParseReader(io.MultiReader(strings.NewReader("\n"), file))
-		}
-	}
-
-	// If we get here, either the first line was valid data or we're skipping it
-	return s.ParseReader(io.MultiReader(strings.NewReader(strings.Join(firstLine, ",")+"\n"), file))
+	return s.ParseReader(file)
 }
